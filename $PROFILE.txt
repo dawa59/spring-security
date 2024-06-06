@@ -1,0 +1,5 @@
+# Start the ssh-agent service
+Start-Service ssh-agent
+
+# Add the SSH key to the agent
+ssh-add ~/.ssh/id_rsa
