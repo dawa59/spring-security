@@ -53,9 +53,10 @@ public class SecurityConfig {
     UserDetailsService userDetailsService(DataSource dataSource){
         return new JdbcUserDetailsManager(dataSource);
     }
-*/
+
     @Bean
     PasswordEncoder passwordEncoder(){
         return  NoOpPasswordEncoder.getInstance();
     }
+ */
 }
