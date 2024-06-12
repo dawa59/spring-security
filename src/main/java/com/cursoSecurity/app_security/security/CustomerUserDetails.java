@@ -28,4 +28,19 @@ public class CustomerUserDetails implements UserDetailsService {
                     }).orElseThrow(() ->new UsernameNotFoundException("User No content"));
 
   }
+  /**
+   * Es lo mismo que lo de arriba, pero
+   * public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+   *     Optional<Customer> optionalCustomer = this.customerRepository.findByEmail(username);
+   *
+   *     if (optionalCustomer.isPresent()) {
+   *         Customer customer = optionalCustomer.get();
+   *         List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(customer.getRol()));
+   *         return new User(customer.getEmail(), customer.getPwd(), authorities);
+   *     } else {
+   *         throw new UsernameNotFoundException("User No content");
+   *     }
+   * }
+   */
+
 }
