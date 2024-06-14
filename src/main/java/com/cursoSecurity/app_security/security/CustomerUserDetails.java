@@ -15,10 +15,11 @@ import java.util.List;
 @Service
 @Transactional
 @AllArgsConstructor
-public class CustomerUserDetails implements UserDetailsService {
+public class CustomerUserDetails{ //implements UserDetailsService {
 
   private final CustomerRepository customerRepository;
-
+/**
+ * Se comenta por usar el autenticathion provide
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
     return this.customerRepository.findByEmail(username)
@@ -28,6 +29,7 @@ public class CustomerUserDetails implements UserDetailsService {
                     }).orElseThrow(() ->new UsernameNotFoundException("User No content"));
 
   }
+  */
   /**
    * Es lo mismo que lo de arriba, pero
    * public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

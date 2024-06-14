@@ -4,7 +4,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 
-@Component
+//@Component comento para que Spring no cargue este componente.
+// No se usa por el autenticathion provider
 public class MyPasswordEncoder implements PasswordEncoder {
 
   @Override
