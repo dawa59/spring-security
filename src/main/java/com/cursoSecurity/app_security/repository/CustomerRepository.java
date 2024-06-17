@@ -1,12 +1,12 @@
 package com.cursoSecurity.app_security.repository;
 
-import com.cursoSecurity.app_security.entities.CustomerEntities;
+import com.cursoSecurity.app_security.entities.CustomerEntity;
 import org.springframework.data.repository.CrudRepository;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
-public interface CustomerRepository extends CrudRepository<CustomerEntities, BigInteger> {
+public interface CustomerRepository extends CrudRepository<CustomerEntity, BigInteger> {
 
-  Optional<CustomerEntities>findByEmail(String email);
+  Optional<CustomerEntity>findByEmail(String email);
 }
