@@ -35,11 +35,12 @@ public class SecurityConfig {
 
     http.authorizeHttpRequests(auth ->
                    // auth.requestMatchers("/loans", "/balance", "/account", "/cards")
-                    auth.requestMatchers("/loans").hasAuthority("VIEW_LOANS")
-                            .requestMatchers("/balance").hasAuthority("VIEW_BALANCE")
-                            .requestMatchers("/cards").hasAuthority("VIEW_CARDS")
+                    //Cambiamos hasAuthority por hasRole para trabajar con ROles en vez de autorización.
+                    auth.requestMatchers("/loans").hasRole("USER")
+                            .requestMatchers("/balance").hasRole("USER")
+                            .requestMatchers("/cards").hasRole("ADMIN")
                             //indica el hasAnyAuthority que se pueda usar mas de un rol
-                            .requestMatchers("/accounts").hasAnyAuthority("VIEW_ACCOUNT", "VIEW_CARDS")
+                            .requestMatchers("/accounts").hasAnyRole("ADMIN")
                             .anyRequest().permitAll()) //cualquier request mandada tiene que tener autenticación
             .formLogin(Customizer.withDefaults()) // formato del login
             .httpBasic(Customizer.withDefaults()); // tipo de autonticación http, usuario y contraseña

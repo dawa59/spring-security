@@ -4,14 +4,14 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import javax.management.relation.Role;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.List;
 
 @Entity
-
 @Table(name = "customers")
 @Data
-public class CustomerEntity {
+public class CustomerEntity implements Serializable {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private BigInteger id;
