@@ -13,7 +13,7 @@ import java.math.BigInteger;
 public class RoleEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private BigInteger id;
+  private BigInteger id_customer;
 
   @Column(name = "role_name")
   private String role_name;

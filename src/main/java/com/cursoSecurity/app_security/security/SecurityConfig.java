@@ -34,8 +34,12 @@ public class SecurityConfig {
     requestHandler.setCsrfRequestAttributeName("_csrf");
 
     http.authorizeHttpRequests(auth ->
-                    auth.requestMatchers("/loans", "/balance", "/account", "/cards")
-                            .authenticated()
+                   // auth.requestMatchers("/loans", "/balance", "/account", "/cards")
+                    auth.requestMatchers("/loans").hasAuthority("VIEW_LOANS")
+                            .requestMatchers("/balance").hasAuthority("VIEW_BALANCE")
+                            .requestMatchers("/cards").hasAuthority("VIEW_CARDS")
+                            //indica el hasAnyAuthority que se pueda usar mas de un rol
+                            .requestMatchers("/accounts").hasAnyAuthority("VIEW_ACCOUNT", "VIEW_CARDS")
                             .anyRequest().permitAll()) //cualquier request mandada tiene que tener autenticación
             .formLogin(Customizer.withDefaults()) // formato del login
             .httpBasic(Customizer.withDefaults()); // tipo de autonticación http, usuario y contraseña
