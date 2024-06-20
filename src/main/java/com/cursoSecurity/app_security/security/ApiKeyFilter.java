@@ -1,4 +1,6 @@
-package com.cursoSecurity.app_security.security;
+/**
+ * Se comenta todo por que no se va a usar por que se implementa el JWT
+ * package com.cursoSecurity.app_security.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -36,3 +38,4 @@ public class ApiKeyFilter extends OncePerRequestFilter {
   filterChain.doFilter(request, response);
   }
 }
+*/

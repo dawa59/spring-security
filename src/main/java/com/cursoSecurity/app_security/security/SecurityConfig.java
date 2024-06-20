@@ -31,7 +31,7 @@ public class SecurityConfig {
     //sino uso esta anotación nunca se va a añadir al contenedor de Spring
   SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     //se usa el Before porque sino tiene el BasiscAuthenticationFilter de nada sirve que esté autenticado.
-    http.addFilterBefore(new ApiKeyFilter(), BasicAuthenticationFilter.class);
+   // http.addFilterBefore(new ApiKeyFilter(), BasicAuthenticationFilter.class);
 
     CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
     requestHandler.setCsrfRequestAttributeName("_csrf");
