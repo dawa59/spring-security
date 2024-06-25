@@ -31,7 +31,7 @@ public class JWTService {
             .parserBuilder()//parseamos para analizar el JWT.
             .setSigningKey(key)//le ponemos una firma en el token. Garantiza la seguridad y la integridad del token.
             .build() //construye el parseo.
-            .parseClaimsJwt(token)// analiza el token y verifica su firma.
+            .parseClaimsJws(token)// analiza el token y verifica su firma.
             .getBody();//obtiene el JWT que contiene los Claims.
   }
 
@@ -77,7 +77,7 @@ public class JWTService {
    * @return
    */
 
-  private String getUserNameFromToken(String token) {
+  public String getUserNameFromToken(String token) {
     return getClaimFormToken(token, Claims::getSubject);
   }
 

@@ -17,7 +17,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
+/**
+ * Con JWT esta clase no es necesaria
+ */
 @Component
 @AllArgsConstructor
 public class MyAutenticationProvider implements AuthenticationProvider {
