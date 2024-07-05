@@ -1,110 +1,126 @@
 package com.cursoSecurity.app_security.security;
 
+import com.cursoSecurity.app_security.services.CustomerUserDetails;
+import org.springframework.boot.autoconfigure.security.oauth2.server.servlet.OAuth2AuthorizationServerAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.provisioning.JdbcUserDetailsManager;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
-import java.util.List;
-
-/**
- * Configuración estandar, no es necesario ponerla
- */
 @Configuration
 public class SecurityConfig {
-  @Bean
-    //sino uso esta anotación nunca se va a añadir al contenedor de Spring
-  SecurityFilterChain securityFilterChain(HttpSecurity http, JWTValidationFilter jwtValidationFilter) throws Exception {
-    http.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-    CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
-    requestHandler.setCsrfRequestAttributeName("_csrf");
 
-    http.authorizeHttpRequests(auth ->
-                                auth.requestMatchers("/loans").hasRole("USER")
-                            .requestMatchers("/balance").hasRole("USER")
-                            .requestMatchers("/cards").hasRole("ADMIN")
-                            //indica el hasAnyAuthority que se pueda usar mas de un rol
-                            .requestMatchers("/accounts").hasAnyRole("ADMIN")
-                            .anyRequest().permitAll()) //cualquier request mandada tiene que tener autenticación
-            .formLogin(Customizer.withDefaults()) // formato del login
-            .httpBasic(Customizer.withDefaults()); // tipo de autonticación http, usuario y contraseña
-    http.addFilterAfter(jwtValidationFilter, BasicAuthenticationFilter.class);
-    http.cors(cors -> corsConfigurationSource());
-    http.csrf(csrf-> csrf.csrfTokenRequestHandler(requestHandler)
-            .ignoringRequestMatchers("/welcome","/aboutUs", "/authenticate")
-            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
-            .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
-    return http.build();
+  private static final String LOGIN_RESOURCE = "/login";
+  private static final String [] USER_RESOURCES = {"/loans/**", "/balance/**"};
+  private static final String [] ADMIN_RESOURCES = {"/accounts/**", "/cards/**"};
+  private static final String AUTH_WRITE = "write";
+  private static final String AUTH_READ = "read";
+  private static final String ROLE_ADMIN = "ADMIN";
+  private static final String ROLE_USER = "USER";
+
+
+
+  @Bean
+  @Order(1)
+  SecurityFilterChain auth2SecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(httpSecurity);
+    httpSecurity.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());
+
+    httpSecurity.exceptionHandling(e ->
+            e.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint(LOGIN_RESOURCE)));
+
+    return httpSecurity.build();
   }
 
-  /**
-   * se comenta por que se va usar los datos de la base de datos
-   *
-   * @Bean InMemoryUserDetailsManager inMemoryUserDetailsManager() {
-   * UserDetails admin = User.withUsername("admin")
-   * .password("to_be_enconded")
-   * .authorities("ADMIN")
-   * .build();
-   * <p>
-   * UserDetails user = User.withUsername("user")
-   * .password("to_be_enconded")
-   * .authorities("USER")
-   * .build();
-   * <p>
-   * return new InMemoryUserDetailsManager(admin, user);
-   * }
-   * @Bean UserDetailsService userDetailsService(DataSource dataSource){
-   * return new JdbcUserDetailsManager(dataSource);
-   * }
-   */
   @Bean
+  @Order(2)
+  /**
+   * Confifguración del cliente
+   */
+  SecurityFilterChain clientSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    httpSecurity.formLogin(Customizer.withDefaults());
+    httpSecurity.authorizeHttpRequests(auth -> auth
+            .requestMatchers(ADMIN_RESOURCES).hasRole(ROLE_ADMIN)
+            .requestMatchers(USER_RESOURCES).hasRole(ROLE_USER)
+            .anyRequest().permitAll());
+    httpSecurity.oauth2ResourceServer(oauth -> oauth
+            .jwt(Customizer.withDefaults()));
+
+    return httpSecurity.build();
+  }
+
+  @Bean
+  @Order(3)
+  /**
+   * Configuración de los roles de usuario
+   */
+  SecurityFilterChain userSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
+
+
+    httpSecurity.authorizeHttpRequests(auth -> auth
+            .requestMatchers(ADMIN_RESOURCES).hasRole(AUTH_WRITE)
+            .requestMatchers(USER_RESOURCES).hasAuthority(AUTH_READ)
+            .anyRequest().permitAll());
+
+
+    return httpSecurity.build();
+  }
+
+
+  @Bean
+  /**
+   *Para hashear el password. Se usa en el método Main
+   */
   PasswordEncoder passwordEncoder() {
-    //return  NoOpPasswordEncoder.getInstance();
-    return NoOpPasswordEncoder.getInstance();
+    return new BCryptPasswordEncoder();
   }
 
+  @Bean
   /**
-   * Método de configuración de cors en el que solo se permite los metodos get y post
-   *
-   * @return
+   * Método para codificar contraseñas con BCrypt y el servicio que proporciona detalles del usuario
    */
-  @Bean
-  CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration config = new CorsConfiguration();
-    //Url especificas permitidas
-    // config.setAllowedOrigins(List.of("http://localhost:8080/"));
-    config.setAllowedOrigins(List.of("*"));
-    config.setAllowedOrigins(List.of("GET", "POST"));
-    config.setAllowedMethods(List.of("*"));
-    config.setAllowedHeaders(List.of("*"));
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    //proteger
-    source.registerCorsConfiguration("/**", config);
-    return source;
-
+  AuthenticationProvider authenticationProvider(PasswordEncoder encoder, CustomerUserDetails userDetails) {
+    DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+    authProvider.setPasswordEncoder(encoder);
+    authProvider.setUserDetailsService(userDetails);
+    return authProvider;
   }
 
   @Bean
-  AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-    return configuration.getAuthenticationManager();
+  AuthorizationServerSettings authorizationServerSettings() {
+    return AuthorizationServerSettings.builder().build();
+  }
+
+  @Bean
+  /**
+   * Parsear los Granted Authorities para quitar el prefijo ROLE_
+   */
+  JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter() {
+    JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
+    converter.setAuthorityPrefix("");
+    return converter;
+  }
+
+  @Bean
+  /**
+   * configuración del Authentication.
+   */
+  JwtAuthenticationConverter jwtAuthenticationConverter (JwtGrantedAuthoritiesConverter settings){
+    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+    converter.setJwtGrantedAuthoritiesConverter(settings);
+    return converter;
   }
 
 }
